@@ -53,17 +53,14 @@ class Agent(object):
                 vnew_list = self.sample_vnew(500)
                 self.vnew[:] = vnew_list[0]
                 min_comp = pow((self.vnew[0]-self.gvel[0]),4) + pow((self.vnew[1]-self.gvel[1]),2)
-                for i in range(len(vnew_list)):
-                    cand_vnew = vnew_list[i]
-                    if(self.test_neighbor(cand_vnew, valid_neighbors)):
-                        np.delete(vnew_list,i,0)
-                    else:
+                for cand_vnew in vnew_list:
+                    if(not self.test_neighbor(cand_vnew, valid_neighbors)):
                         vel_comp = pow((cand_vnew[0]-self.gvel[0]),2) + pow((cand_vnew[1]-self.gvel[1]),2)
                         if(vel_comp < min_comp):
                             min_comp = vel_comp
                             self.vnew = cand_vnew
-                print(len(vnew_list))
-                print(cand_vnew)
+                print("ID: ",self.id, "min_comp: ", min_comp)
+                #print(cand_vnew)
                 '''
                     for agent in valid_neighbors:
                         
@@ -86,7 +83,7 @@ class Agent(object):
             as well as determine the new goal velocity 
         """
         if not self.atGoal:
-            print(self.vnew)
+            #print(self.vnew)
             self.vel[:] = self.vnew[:]
             self.pos += self.vel*dt   #update the position
         
