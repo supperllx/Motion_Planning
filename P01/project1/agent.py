@@ -44,20 +44,35 @@ class Agent(object):
         """       
         if not self.atGoal:
             #self.vnew[:] = self.gvel[:]   # here I just set the new velocity to be the goal velocity
-            valid_neighbors = self.in_range(neighbors, 1.75)
-            for i in valid_neighbors:
-                if(self.id==i.id): valid_neighbors.remove(i)
+            valid_neighbors = self.in_range(neighbors, 3)
+            #for i in valid_neighbors:
+            #    if(self.id==i.id): valid_neighbors.remove(i)
             
-            if(len(valid_neighbors)!=0):
-                vnew_list = self.sample_vnew(100)
+            if(len(valid_neighbors)>0):
+                print(len(valid_neighbors))
+                vnew_list = self.sample_vnew(500)
                 self.vnew[:] = vnew_list[0]
-                min_comp = pow((self.vnew[0]-self.gvel[0]),2) + pow((self.vnew[1]-self.gvel[1]),2)
-                for cand_vnew in vnew_list:
+                min_comp = pow((self.vnew[0]-self.gvel[0]),4) + pow((self.vnew[1]-self.gvel[1]),2)
+                for i in range(len(vnew_list)):
+                    cand_vnew = vnew_list[i]
+                    if(self.test_neighbor(cand_vnew, valid_neighbors)):
+                        np.delete(vnew_list,i,0)
+                    else:
+                        vel_comp = pow((cand_vnew[0]-self.gvel[0]),2) + pow((cand_vnew[1]-self.gvel[1]),2)
+                        if(vel_comp < min_comp):
+                            min_comp = vel_comp
+                            self.vnew = cand_vnew
+                print(len(vnew_list))
+                print(cand_vnew)
+                '''
                     for agent in valid_neighbors:
+                        
                         vel_comp = pow((cand_vnew[0]-self.gvel[0]),2) + pow((cand_vnew[1]-self.gvel[1]),2)
                         if((not self.test_vo(self.vnew, agent)) and vel_comp<min_comp):
                             min_comp = vel_comp
                             self.vnew[:] = cand_vnew
+                        '''
+
             else:
                 self.vnew[:] = self.gvel[:]
 
@@ -71,6 +86,7 @@ class Agent(object):
             as well as determine the new goal velocity 
         """
         if not self.atGoal:
+            print(self.vnew)
             self.vel[:] = self.vnew[:]
             self.pos += self.vel*dt   #update the position
         
@@ -82,8 +98,9 @@ class Agent(object):
             else: 
                 self.gvel = self.gvel/sqrt(distGoalSq)*self.prefspeed  
 
-    def in_range(self, neighbors:list,threshold):
+    def in_range(self, neighbors,threshold):
         valid_neighbors = neighbors.copy()
+        valid_neighbors.remove(self)
         for i in valid_neighbors:
             distance = sqrt(pow((self.pos[0]-i.pos[0]),2)+pow((self.pos[1]-i.pos[1]),2))
             if(distance>=threshold): valid_neighbors.remove(i)
@@ -117,6 +134,11 @@ class Agent(object):
         y1 = test_v[0]*vo[0][0] + vo[0][1]
         y2 = test_v[0]*vo[1][0] + vo[1][1]
         return (test_v[1]>y1 and test_v[1]>y2)
+
+    def test_neighbor(self, test_v, neighbor):
+        for target in neighbor:
+            if self.test_vo(test_v, target): return True
+        return False
 
     def sample_vnew(self, n_sample):
         temp_vnew = np.zeros((n_sample,2))
