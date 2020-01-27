@@ -43,39 +43,33 @@ class Agent(object):
             The code should set the vnew of the agent to be one of the sampled admissible one. Please do not directly set here the agent's velocity.   
         """       
         if not self.atGoal:
-            #self.vnew[:] = self.gvel[:]   # here I just set the new velocity to be the goal velocity
-            valid_neighbors = self.in_range(neighbors, 3)
-            #for i in valid_neighbors:
-            #    if(self.id==i.id): valid_neighbors.remove(i)
+            k = 4 # number of the nearest agent who are chosen
+            N = 200 # number of candidate vnew we will create
+
+            valid_neighbors = self.in_range(neighbors, self.dhor)
+            n_nearest = min(k, len(valid_neighbors))
+            dist = []
+            for i in valid_neighbors:
+                dist.append(self.get_distance(i))
+
+            nearest_neighbors = ([x for _,x in sorted(zip(dist,valid_neighbors))])[:n_nearest]
             
-            if(len(valid_neighbors)>0):
-                print(len(valid_neighbors))
-                vnew_list = self.sample_vnew(500)
-                self.vnew[:] = vnew_list[0]
-                min_comp = pow((self.vnew[0]-self.gvel[0]),4) + pow((self.vnew[1]-self.gvel[1]),2)
+            if(len(nearest_neighbors)>0):
+                vnew_list = self.sample_vnew(N)
+                min_cost = float('inf')
                 for cand_vnew in vnew_list:
-                    if(not self.test_neighbor(cand_vnew, valid_neighbors)):
-                        vel_comp = pow((cand_vnew[0]-self.gvel[0]),2) + pow((cand_vnew[1]-self.gvel[1]),2)
-                        if(vel_comp < min_comp):
-                            min_comp = vel_comp
+                    tc = self.get_tc(cand_vnew, nearest_neighbors)
+                    if(tc == 0):
+                        break
+                    else:
+                        cost = self.get_cost(cand_vnew, tc)
+                        if(cost < min_cost):
                             self.vnew = cand_vnew
-                print("ID: ",self.id, "min_comp: ", min_comp)
-                #print(cand_vnew)
-                '''
-                    for agent in valid_neighbors:
-                        
-                        vel_comp = pow((cand_vnew[0]-self.gvel[0]),2) + pow((cand_vnew[1]-self.gvel[1]),2)
-                        if((not self.test_vo(self.vnew, agent)) and vel_comp<min_comp):
-                            min_comp = vel_comp
-                            self.vnew[:] = cand_vnew
-                        '''
+                            min_cost = cost
+                #self.vnew = best_vnew
 
             else:
-                self.vnew[:] = self.gvel[:]
-
-
-
-      
+                self.vnew = self.gvel  
 
     def update(self, dt):
         """ 
@@ -83,7 +77,8 @@ class Agent(object):
             as well as determine the new goal velocity 
         """
         if not self.atGoal:
-            #print(self.vnew)
+            #print("------------")
+            #print("ID: ",self.id, "vnew: ", self.vnew, "gvel: ", self.gvel)
             self.vel[:] = self.vnew[:]
             self.pos += self.vel*dt   #update the position
         
@@ -95,60 +90,58 @@ class Agent(object):
             else: 
                 self.gvel = self.gvel/sqrt(distGoalSq)*self.prefspeed  
 
-    def in_range(self, neighbors,threshold):
-        valid_neighbors = neighbors.copy()
-        valid_neighbors.remove(self)
-        for i in valid_neighbors:
-            distance = sqrt(pow((self.pos[0]-i.pos[0]),2)+pow((self.pos[1]-i.pos[1]),2))
-            if(distance>=threshold): valid_neighbors.remove(i)
-
+    def in_range(self, neighbors,dh):
+        valid_neighbors = []
+        for i in neighbors:
+            distance  =  sqrt((self.pos[0] - i.pos[0])**2 + (self.pos[1] - i.pos[1])**2)
+            if(i.id != self.id and distance <= dh ): valid_neighbors.append(i)
         return valid_neighbors
 
-    def get_vo(self, target):
-        vo = [[0,0],[0,0]]
+    def get_tau(self, v0, target):
+        r = self.radius+target.radius
+        x = self.pos - target.pos
+        c = x.dot(x)-r**2
+        if(c<0): return 0
+        v = v0-target.vel
+        a = v.dot(v)
+        b = x.dot(v)
+        if(b>0): return float('inf')
+        discr = b*b -a*c
+        if(discr<=0): return float('inf')
+        tau = c/(-b +sqrt(discr))
+        if(tau < 0): return float('inf')
+        return tau
 
-        temp_point = [(0+target.vel[0]),(0+target.vel[1])] #temp_point[0] = p, temp_point[1] = q
-        circle_point = [target.pos[0]-self.pos[0], target.pos[1]-self.pos[1]] #circle_point[0] = a, circle_point[1] = b
-        r = target.radius + self.radius
+    def get_tc(self, cand_vnew, neighbor):
+        temp = [0]*len(neighbor)
+        for i in range(len(neighbor)):
+            agent = neighbor[i]
+            tau = self.get_tau(cand_vnew, agent)
+            if(tau == 0): return 0
+            else:
+                temp[i] = tau
+        return min(temp)
 
-        p = temp_point[0]
-        q = temp_point[1]
-        a = circle_point[0]
-        b = circle_point[1]
-
-        #print(pow((p-a),2) + pow((q-b),2) - pow(r,2), 'id: ', self.id,' ', target.id)
-        k1 = ((p-a)*(q-b) - r* sqrt(pow((p-a),2) + pow((q-b),2) - pow(r,2))) / (pow((p-a),2) - pow(r,2))
-        vo[0][0] = k1
-        vo[0][1] = q - p*k1
-
-        k2 = ((p-a)*(q-b) + r* sqrt(pow((p-a),2) + pow((q-b),2) - pow(r,2))) / (pow((p-a),2) - pow(r,2))
-        vo[1][0] = k2
-        vo[1][1] = q - p*k2
-        return vo
-
-    def test_vo(self, test_v, target):
-        vo = self.get_vo(target)
-        y1 = test_v[0]*vo[0][0] + vo[0][1]
-        y2 = test_v[0]*vo[1][0] + vo[1][1]
-        return (test_v[1]>y1 and test_v[1]>y2)
-
-    def test_neighbor(self, test_v, neighbor):
-        for target in neighbor:
-            if self.test_vo(test_v, target): return True
-        return False
+    def get_cost(self, cand_vnew, tc, alpha=1, beta=1, gama=2):
+        return (alpha*(np.linalg.norm(cand_vnew-self.gvel)) + beta*(np.linalg.norm(cand_vnew-self.vel)) + (gama/tc) )
 
     def sample_vnew(self, n_sample):
-        temp_vnew = np.zeros((n_sample,2))
+        #temp_vnew = np.zeros((n_sample,2))
+        temp_vnew = [[0,0]]*n_sample
 
         for i in range(0,n_sample):
             theta = random.random()*2*np.pi
             r = random.uniform(0,self.maxspeed)
-            temp_vnew[i][0] = sin(theta)*(sqrt(r))
-            temp_vnew[i][1] = cos(theta)*(sqrt(r))
+            temp_vnew[i] = np.array([sin(theta)*(sqrt(r)), cos(theta)*(sqrt(r))])
         return temp_vnew
 
     def get_distance(self, target):
-        distance = sqrt((self.pos[0]-target.pos[0])**2+(self.pos[1]-target.pos[1])**2)
+        distance = sqrt((self.pos[0]-target.pos[0])**2+(self.pos[1]-target.pos[1])**2) - (self.radius + target.radius)
         return distance
-        
-  
+    
+    def get_min_dist(self, neighbor):
+        dist = [0]*len(neighbor)
+        for i in range(len(neighbor)):
+            dist[i] = self.get_distance(neighbor[i])
+        return min(dist)
+
