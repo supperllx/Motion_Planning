@@ -20,7 +20,7 @@ from agent import Agent
 dt = 0.1 # the simulation time step
 #scenarioFile='8_agents.csv'
 scenarioFile='crossing_agents.csv'
-doExport = False # export the simulation?
+doExport = True # export the simulation?
 agents = [] # the simulated agents
 trajectories = [] # keep track of the agents' traces
 ittr = 0 # keep track of simulation iterations 

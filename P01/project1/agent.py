@@ -66,8 +66,6 @@ class Agent(object):
                         if(cost < min_cost):
                             self.vnew = cand_vnew
                             min_cost = cost
-                #self.vnew = best_vnew
-
             else:
                 self.vnew = self.gvel  
 
@@ -77,8 +75,6 @@ class Agent(object):
             as well as determine the new goal velocity 
         """
         if not self.atGoal:
-            #print("------------")
-            #print("ID: ",self.id, "vnew: ", self.vnew, "gvel: ", self.gvel)
             self.vel[:] = self.vnew[:]
             self.pos += self.vel*dt   #update the position
         
