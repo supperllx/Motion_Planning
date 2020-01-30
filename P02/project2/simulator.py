@@ -17,14 +17,13 @@ from agent import Agent
 """
     Initalize parameters to run a simulation
 """
-dt = 0.1 # the simulation time step
-#scenarioFile='8_agents.csv'
-scenarioFile='crossing_agents.csv'
+dt = 0.05 # the simulation time step
+scenarioFile='3_agents.csv'
 doExport = False # export the simulation?
 agents = [] # the simulated agents
 trajectories = [] # keep track of the agents' traces
 ittr = 0 # keep track of simulation iterations 
-maxIttr = 200  #how many time steps we want to simulate
+maxIttr = 500  #how many time steps we want to simulate
 globalTime = 0  # simuation time      
 reachedGoals = False # have all agents reached their goals
 
@@ -50,7 +49,7 @@ def readScenario(fileName, scalex=1., scaley=1.):
     lines = fp.readlines()
     fp.close()
     for line in lines:
-        agents.append(Agent(line.split(','),5,1)) # create an agent and add it to the list
+        agents.append(Agent(line.split(','),0.5,1,10)) # create an agent and add it to the list
     
     # define the boundaries of the environment
     positions = [a.pos for a in agents]
@@ -60,7 +59,7 @@ def readScenario(fileName, scalex=1., scaley=1.):
     x_max =	max(np.amax(np.array(positions)[:,0]), np.amax(np.array(goals)[:,0]))*scalex + 2.
     y_max =	max(np.amax(np.array(positions)[:,1]), np.amax(np.array(goals)[:,1]))*scaley + 2.
 
-    num = len(agents)
+    num = len(agents);
 
     return x_min, x_max, y_min, y_max 
 
@@ -72,7 +71,7 @@ def initWorld(canvas):
     print ("")
     print ("Simulation of Agents on a 2D plane.")
     print ("Green Arrow is Goal Velocity, Red Arrow is Current Velocity")
-    print ("SPACE to pause, 's' to step frame-by-frame, 'v' to turn the velocity display on/off.")
+    print ("SPACE to pause, 'S' to step frame-by-frame, 'V' to turn the velocity display on/off.")
     print ("")
        
     colors = ["#FAA", "blue","yellow", "white"]
@@ -122,9 +121,9 @@ def updateSim(dt):
 
     global reachedGoals
    
-    # compute the new velocty for each agent
+    # compute the forces acting on each agent
     for agent in agents:
-        agent.computeNewVelocity(agents)
+        agent.computeForces(agents)
     
     
     reachedGoals = True    
