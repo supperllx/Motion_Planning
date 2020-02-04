@@ -82,7 +82,8 @@ class Agent(object):
     def in_range(self, neighbors,dh):
         valid_neighbors = []
         for i in neighbors:
-            distance  =  sqrt((self.pos[0] - i.pos[0])**2 + (self.pos[1] - i.pos[1])**2)
+            #distance  =  sqrt((self.pos[0] - i.pos[0])**2 + (self.pos[1] - i.pos[1])**2)
+            distance = np.linalg.norm(self.pos - i.pos)
             if(i.id != self.id and distance <= dh ): valid_neighbors.append(i)
         return valid_neighbors
             
@@ -116,5 +117,6 @@ class Agent(object):
         return fa
 
     def get_distance(self, target):
-        distance = sqrt((self.pos[0]-target.pos[0])**2+(self.pos[1]-target.pos[1])**2) - (self.radius + target.radius)
+        #distance = sqrt((self.pos[0]-target.pos[0])**2+(self.pos[1]-target.pos[1])**2) - (self.radius + target.radius)
+        distance = np.linalg.norm(self.pos - target.pos) - (sefl.radius + target.radius)
         return distance
