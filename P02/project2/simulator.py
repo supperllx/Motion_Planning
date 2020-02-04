@@ -18,8 +18,8 @@ from agent import Agent
     Initalize parameters to run a simulation
 """
 dt = 0.05 # the simulation time step
-#scenarioFile='8_agents.csv'
-scenarioFile='crossing_agents.csv'
+scenarioFile='8_agents.csv'
+#scenarioFile='crossing_agents.csv'
 doExport = False # export the simulation?
 agents = [] # the simulated agents
 trajectories = [] # keep track of the agents' traces
