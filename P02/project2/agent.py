@@ -36,7 +36,7 @@ class Agent(object):
         self.F = np.zeros(2) # the total force acting on the agent
         self.maxF = maxF # the maximum force that can be applied to the agent
 
-    def computeForces(self, neighbors=[]):
+    def computeForces(self, neighbors=[], eps=0.3):
         """ 
             Your code to compute the forces acting on the agent. 
             You probably need to pass here a list of all the agents in the simulation to determine the agent's nearest neighbors
@@ -54,7 +54,7 @@ class Agent(object):
             '''
             if(len(valid_neighbors)>0):
                 for target in valid_neighbors:
-                    self.F+=self.get_fa(target)
+                    self.F+=self.get_fa(target, eps)
                 if (np.linalg.norm(self.F) > self.maxF):
                     self.F*=self.maxF/np.linalg.norm(self.F)
             else:
@@ -86,14 +86,14 @@ class Agent(object):
             if(i.id != self.id and distance <= dh ): valid_neighbors.append(i)
         return valid_neighbors
             
-    def get_tau(self, v0, target):
+    def get_tau(self, v0, target, eps):
         r = self.radius+target.radius
         x = self.pos - target.pos
         c = x.dot(x)-r**2
         if(c<0): return 0
         v = v0-target.vel
-        a = v.dot(v)
-        b = x.dot(v)
+        a = v.dot(v) - eps**2
+        b = x.dot(v) - eps*r
         if(b>0): return float('inf')
         discr = b*b -a*c
         if(discr<=0): return float('inf')
@@ -101,10 +101,10 @@ class Agent(object):
         if(tau < 0): return float('inf')
         return tau
 
-    def get_fa(self, target): #get avoid force of self and another one agent
+    def get_fa(self, target, eps): #get avoid force of self and another one agent
         x = self.pos - target.pos
         v = self.vel - target.vel
-        tau = self.get_tau(self.vel, target)
+        tau = self.get_tau(self.vel, target, eps)
         #n = (temp_avoid) / sqrt(temp_avoid[0]**2 + temp_avoid[1]**2)
         if(tau==0): return np.zeros(2)
         elif (tau==float('inf')): return np.zeros(2)
