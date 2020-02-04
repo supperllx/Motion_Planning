@@ -118,5 +118,5 @@ class Agent(object):
 
     def get_distance(self, target):
         #distance = sqrt((self.pos[0]-target.pos[0])**2+(self.pos[1]-target.pos[1])**2) - (self.radius + target.radius)
-        distance = np.linalg.norm(self.pos - target.pos) - (sefl.radius + target.radius)
+        distance = np.linalg.norm(self.pos - target.pos) - (self.radius + target.radius)
         return distance
