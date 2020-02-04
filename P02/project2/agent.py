@@ -42,8 +42,24 @@ class Agent(object):
             You probably need to pass here a list of all the agents in the simulation to determine the agent's nearest neighbors
         """       
         if not self.atGoal:
-            self.F = np.zeros(2)
-            
+            self.F = (self.gvel-self.vel)/self.ksi #set F as F_goal
+            valid_neighbors = self.in_range(neighbors, self.dhor) #get valid agents list within the dhor range
+            '''
+            k = 4
+            n_nearest = min(k, len(valid_neighbors))
+            dist = []
+            for i in valid_neighbors:
+                dist.append(self.get_distance(i))
+            nearest_neighbors = ([x for _,x in sorted(zip(dist,valid_neighbors))])[:n_nearest] #get the nearest k agents list within the dhor range
+            '''
+            if(len(valid_neighbors)>0):
+                for target in valid_neighbors:
+                    self.F+=self.get_fa(target)
+                if (np.linalg.norm(self.F) > self.maxF):
+                    self.F*=self.maxF/np.linalg.norm(self.F)
+            else:
+                self.F = (self.gvel-self.vel)/self.ksi
+                
 
     def update(self, dt):
         """ 
@@ -57,10 +73,48 @@ class Agent(object):
             # compute the goal velocity for the next time step. Do not modify this
             self.gvel = self.goal - self.pos
             distGoalSq = self.gvel.dot(self.gvel)
+            #distGoalSq = np.linalg.norm(self.pos-self.goal)
             if distGoalSq < self.goalRadiusSq: 
                 self.atGoal = True  # goal has been reached
             else: 
                 self.gvel = self.gvel/sqrt(distGoalSq)*self.prefspeed  
+
+    def in_range(self, neighbors,dh):
+        valid_neighbors = []
+        for i in neighbors:
+            distance  =  sqrt((self.pos[0] - i.pos[0])**2 + (self.pos[1] - i.pos[1])**2)
+            if(i.id != self.id and distance <= dh ): valid_neighbors.append(i)
+        return valid_neighbors
             
-            
-  
+    def get_tau(self, v0, target):
+        r = self.radius+target.radius
+        x = self.pos - target.pos
+        c = x.dot(x)-r**2
+        if(c<0): return 0
+        v = v0-target.vel
+        a = v.dot(v)
+        b = x.dot(v)
+        if(b>0): return float('inf')
+        discr = b*b -a*c
+        if(discr<=0): return float('inf')
+        tau = c/(-b +sqrt(discr))
+        if(tau < 0): return float('inf')
+        return tau
+
+    def get_fa(self, target): #get avoid force of self and another one agent
+        x = self.pos - target.pos
+        v = self.vel - target.vel
+        tau = self.get_tau(self.vel, target)
+        #n = (temp_avoid) / sqrt(temp_avoid[0]**2 + temp_avoid[1]**2)
+        if(tau==0): return np.zeros(2)
+        elif (tau==float('inf')): return np.zeros(2)
+        else: 
+            temp_avoid = x + v*tau
+            n = (temp_avoid) / sqrt(temp_avoid[0]**2 + temp_avoid[1]**2)
+
+        fa = (max(self.timehor-tau,0)/tau)*n
+        return fa
+
+    def get_distance(self, target):
+        distance = sqrt((self.pos[0]-target.pos[0])**2+(self.pos[1]-target.pos[1])**2) - (self.radius + target.radius)
+        return distance

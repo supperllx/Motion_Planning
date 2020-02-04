@@ -18,7 +18,8 @@ from agent import Agent
     Initalize parameters to run a simulation
 """
 dt = 0.05 # the simulation time step
-scenarioFile='3_agents.csv'
+#scenarioFile='8_agents.csv'
+scenarioFile='crossing_agents.csv'
 doExport = False # export the simulation?
 agents = [] # the simulated agents
 trajectories = [] # keep track of the agents' traces
@@ -49,7 +50,7 @@ def readScenario(fileName, scalex=1., scaley=1.):
     lines = fp.readlines()
     fp.close()
     for line in lines:
-        agents.append(Agent(line.split(','),0.5,1,10)) # create an agent and add it to the list
+        agents.append(Agent(line.split(','),0.5,5,5,1,10)) # create an agent and add it to the list
     
     # define the boundaries of the environment
     positions = [a.pos for a in agents]
@@ -59,7 +60,7 @@ def readScenario(fileName, scalex=1., scaley=1.):
     x_max =	max(np.amax(np.array(positions)[:,0]), np.amax(np.array(goals)[:,0]))*scalex + 2.
     y_max =	max(np.amax(np.array(positions)[:,1]), np.amax(np.array(goals)[:,1]))*scaley + 2.
 
-    num = len(agents);
+    num = len(agents)
 
     return x_min, x_max, y_min, y_max 
 
