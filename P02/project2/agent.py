@@ -10,6 +10,8 @@
 
 import numpy as np
 from math import sqrt
+import random
+import math
 
 class Agent(object):
 
@@ -36,7 +38,7 @@ class Agent(object):
         self.F = np.zeros(2) # the total force acting on the agent
         self.maxF = maxF # the maximum force that can be applied to the agent
 
-    def computeForces(self, neighbors=[], eps=0.3):
+    def computeForces(self, neighbors=[], eps=0.2, nu = 0.1):
         """ 
             Your code to compute the forces acting on the agent. 
             You probably need to pass here a list of all the agents in the simulation to determine the agent's nearest neighbors
@@ -54,7 +56,8 @@ class Agent(object):
             '''
             if(len(valid_neighbors)>0):
                 for target in valid_neighbors:
-                    self.F+=self.get_fa(target, eps)
+                    target.vel += self.get_random_eta(nu)
+                    self.F+=self.get_de_ad(target, eps)  #change the function called here to switch between ttc and powerlaw
                 if (np.linalg.norm(self.F) > self.maxF):
                     self.F*=self.maxF/np.linalg.norm(self.F)
             else:
@@ -87,14 +90,14 @@ class Agent(object):
             if(i.id != self.id and distance <= dh ): valid_neighbors.append(i)
         return valid_neighbors
             
-    def get_tau(self, v0, target, eps):
+    def get_tau(self, v0, target, eps): #calculate tau for ttc/ttt with eps
         r = self.radius+target.radius
         x = self.pos - target.pos
         c = x.dot(x)-r**2
         if(c<0): return 0
         v = v0-target.vel
-        a = v.dot(v) - eps**2
-        b = x.dot(v) - eps*r
+        a = v.dot(v) #- eps**2  #choose use eps or not 
+        b = x.dot(v) #- eps*r
         if(b>0): return float('inf')
         discr = b*b -a*c
         if(discr<=0): return float('inf')
@@ -102,7 +105,7 @@ class Agent(object):
         if(tau < 0): return float('inf')
         return tau
 
-    def get_fa(self, target, eps): #get avoid force of self and another one agent
+    def get_fa(self, target, eps): #get avoid force of self and another one agent by ttc algorithm 
         x = self.pos - target.pos
         v = self.vel - target.vel
         tau = self.get_tau(self.vel, target, eps)
@@ -115,6 +118,41 @@ class Agent(object):
 
         fa = (max(self.timehor-tau,0)/tau)*n
         return fa
+    
+    def get_de(self, target, eps): #get avoid force by powerlaw with Isotropic model  
+        k = 1
+        x = self.pos - target.pos
+        v = self.vel - target.vel
+        r = self.radius + target.radius
+        a = v.dot(v) - eps**2
+        b = x.dot(v) - eps*r
+        c = x.dot(x) - r*r
+        discr = b*b - a*c
+        if(discr<=0): return np.zeros(2)
+        discr = sqrt(discr)
+        t = (-b - discr)/a
+        if(t<0): return np.zeros(2) #no collision and no avoid force
+        return 2*k*((x+v*t)/discr)/(t**3)
+
+    def get_de_ad(self, target, eps): #get avoid force by powerlaw with Adversarial model 
+        k = 1
+        x = self.pos - target.pos
+        v = self.vel - target.vel
+        v -= eps*(x/np.linalg.norm(x))
+        r = self.radius + target.radius
+        a = v.dot(v)
+        b = x.dot(v)
+        c = x.dot(x) - r*r
+        discr = b*b - a*c
+        if(discr<=0): return np.zeros(2)
+        discr = sqrt(discr)
+        t = (-b - discr)/a
+        if(t<0): return np.zeros(2) #no collision and no avoid force
+        return 2*k*((x+v*t)/discr)/(t**3)
+    
+    def get_random_eta(self, nu=0.1):
+        theta = random.random()*2*np.pi
+        return np.array([nu*math.cos(theta), nu*math.sin(theta)])
 
     def get_distance(self, target):
         #distance = sqrt((self.pos[0]-target.pos[0])**2+(self.pos[1]-target.pos[1])**2) - (self.radius + target.radius)
