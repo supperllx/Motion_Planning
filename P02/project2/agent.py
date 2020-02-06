@@ -46,7 +46,7 @@ class Agent(object):
         if not self.atGoal:
             self.F = (self.gvel-self.vel)/self.ksi #set F as F_goal
             valid_neighbors = self.in_range(neighbors, self.dhor) #get valid agents list within the dhor range
-            #valid_neighbors = np.array(self.in_range(neighbors, self.dhor)) 
+            #valid_neighbors = np.array(self.in_range(neighbors, self.dhor)) #use numpy.array.argsort() to get the nearest_neighbors
             
             k = 4
             n_nearest = min(k, len(valid_neighbors))
