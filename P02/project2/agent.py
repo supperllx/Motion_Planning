@@ -55,12 +55,12 @@ class Agent(object):
             for i in valid_neighbors:
                 dist.append(self.get_distance(i))
                 #dist[i] = self.get_distance(valid_neighbors[i])
-            nearest_neighbors = ([x for _,x in sorted(zip(dist,valid_neighbors))])[:n_nearest] #get the nearest k agents list within the dhor range
+            #nearest_neighbors = ([x for _,x in sorted(zip(dist,valid_neighbors))])[:n_nearest] #get the nearest k agents list within the dhor range
             #nearest_neighbors = valid_neighbors[dist.argsort()][:n_nearest]
 
             if(len(valid_neighbors)>0):
-                for target in nearest_neighbors:
-                    target.vel += self.get_random_eta(nu)
+                for target in valid_neighbors:
+                    #target.vel += self.get_random_eta(nu)
                     self.F+=self.get_de_ad(target, eps)  #change the function called here to switch between ttc and powerlaw
                 if (np.linalg.norm(self.F) > self.maxF):
                     self.F*=self.maxF/np.linalg.norm(self.F)
@@ -125,6 +125,8 @@ class Agent(object):
     
     def get_de(self, target, eps): #get avoid force by powerlaw with Isotropic model  
         k = 1
+        t0 = 3
+        m = 2
         x = self.pos - target.pos
         v = self.vel - target.vel
         r = self.radius + target.radius
@@ -136,10 +138,15 @@ class Agent(object):
         discr = sqrt(discr)
         t = (-b - discr)/a
         if(t<0): return np.zeros(2) #no collision and no avoid force
-        return 2*k*((x+v*t)/discr)/(t**3)
+        #return 2*k*((x+v*t)/discr)/(t**3)
+        tau = c/(-b +sqrt(discr))
+        fa = k*(np.e**(-tau/t0))*(m+tau/t0)*(x+v*tau)/((tau**(m+1))*sqrt(discr))  #with cutoff
+        return fa
 
     def get_de_ad(self, target, eps): #get avoid force by powerlaw with Adversarial model 
-        k = 1
+        k = 10
+        t0 = 3
+        m = 2
         x = self.pos - target.pos
         v = self.vel - target.vel
         v -= eps*(x/np.linalg.norm(x))
@@ -152,7 +159,10 @@ class Agent(object):
         discr = sqrt(discr)
         t = (-b - discr)/a
         if(t<0): return np.zeros(2) #no collision and no avoid force
-        return 2*k*((x+v*t)/discr)/(t**3)
+        tau = c/(-b +sqrt(discr))
+        fa = k*(np.e**(-tau/t0))*(m+tau/t0)*(x+v*tau)/((tau**(m+1))*sqrt(discr))
+        #return 2*k*((x+v*t)/discr)/(t**3)
+        return fa
     
     def get_random_eta(self, nu=0.1):
         theta = random.random()*2*np.pi
