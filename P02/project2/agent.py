@@ -46,16 +46,20 @@ class Agent(object):
         if not self.atGoal:
             self.F = (self.gvel-self.vel)/self.ksi #set F as F_goal
             valid_neighbors = self.in_range(neighbors, self.dhor) #get valid agents list within the dhor range
-            '''
+            #valid_neighbors = np.array(self.in_range(neighbors, self.dhor)) 
+            
             k = 4
             n_nearest = min(k, len(valid_neighbors))
             dist = []
+            #dist = np.zeros(len(valid_neighbors))
             for i in valid_neighbors:
                 dist.append(self.get_distance(i))
+                #dist[i] = self.get_distance(valid_neighbors[i])
             nearest_neighbors = ([x for _,x in sorted(zip(dist,valid_neighbors))])[:n_nearest] #get the nearest k agents list within the dhor range
-            '''
+            #nearest_neighbors = valid_neighbors[dist.argsort()][:n_nearest]
+
             if(len(valid_neighbors)>0):
-                for target in valid_neighbors:
+                for target in nearest_neighbors:
                     target.vel += self.get_random_eta(nu)
                     self.F+=self.get_de_ad(target, eps)  #change the function called here to switch between ttc and powerlaw
                 if (np.linalg.norm(self.F) > self.maxF):
