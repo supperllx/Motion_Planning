@@ -38,7 +38,7 @@ class Agent(object):
         self.F = np.zeros(2) # the total force acting on the agent
         self.maxF = maxF # the maximum force that can be applied to the agent
 
-    def computeForces(self, neighbors=[], eps=0.2, nu = 0.1):
+    def computeForces(self, neighbors=[], eps=0.1, nu = 0.3):
         """ 
             Your code to compute the forces acting on the agent. 
             You probably need to pass here a list of all the agents in the simulation to determine the agent's nearest neighbors
@@ -60,7 +60,7 @@ class Agent(object):
 
             if(len(valid_neighbors)>0):
                 for target in valid_neighbors:
-                    #target.vel += self.get_random_eta(nu)
+                    target.vel += self.get_random_eta(nu)
                     self.F+=self.get_de_ad(target, eps)  #change the function called here to switch between ttc and powerlaw
                 if (np.linalg.norm(self.F) > self.maxF):
                     self.F*=self.maxF/np.linalg.norm(self.F)
@@ -166,7 +166,9 @@ class Agent(object):
     
     def get_random_eta(self, nu=0.1):
         theta = random.random()*2*np.pi
-        return np.array([nu*math.cos(theta), nu*math.sin(theta)])
+        r = (random.uniform(0,nu**2))
+        return np.array([math.cos(theta)*(sqrt(r)), math.sin(theta)*(sqrt(r))])
+        #return np.array([nu*math.cos(theta), nu*math.sin(theta)])
 
     def get_distance(self, target):
         #distance = sqrt((self.pos[0]-target.pos[0])**2+(self.pos[1]-target.pos[1])**2) - (self.radius + target.radius)
