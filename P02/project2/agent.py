@@ -38,7 +38,7 @@ class Agent(object):
         self.F = np.zeros(2) # the total force acting on the agent
         self.maxF = maxF # the maximum force that can be applied to the agent
 
-    def computeForces(self, neighbors=[], eps=0.1, nu = 0.3):
+    def computeForces(self, neighbors=[], eps=0.2, nu = 0.1):
         """ 
             Your code to compute the forces acting on the agent. 
             You probably need to pass here a list of all the agents in the simulation to determine the agent's nearest neighbors
