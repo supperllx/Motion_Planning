@@ -15,7 +15,7 @@ import math
 
 class Agent(object):
 
-    def __init__(self, csvParameters, ksi=0.5, dhor = 10, timehor=5, goalRadiusSq=1, maxF = 10):
+    def __init__(self, csvParameters, ksi=0.5, dhor = 7, timehor=4, goalRadiusSq=1, maxF = 10):
         """ 
             Takes an input line from the csv file,  
             and initializes the agent
@@ -38,7 +38,7 @@ class Agent(object):
         self.F = np.zeros(2) # the total force acting on the agent
         self.maxF = maxF # the maximum force that can be applied to the agent
 
-    def computeForces(self, neighbors=[], eps=0.2, nu = 0.1):
+    def computeForces(self, neighbors=[], eps=0.1, nu = 0.5):
         """ 
             Your code to compute the forces acting on the agent. 
             You probably need to pass here a list of all the agents in the simulation to determine the agent's nearest neighbors
@@ -47,8 +47,8 @@ class Agent(object):
             self.F = (self.gvel-self.vel)/self.ksi #set F as F_goal
             valid_neighbors = self.in_range(neighbors, self.dhor) #get valid agents list within the dhor range
             #valid_neighbors = np.array(self.in_range(neighbors, self.dhor)) #use numpy.array.argsort() to get the nearest_neighbors
-            
-            k = 4
+            '''
+            k = 4 #k-nearest method
             n_nearest = min(k, len(valid_neighbors))
             dist = []
             #dist = np.zeros(len(valid_neighbors))
@@ -57,13 +57,12 @@ class Agent(object):
                 #dist[i] = self.get_distance(valid_neighbors[i])
             #nearest_neighbors = ([x for _,x in sorted(zip(dist,valid_neighbors))])[:n_nearest] #get the nearest k agents list within the dhor range
             #nearest_neighbors = valid_neighbors[dist.argsort()][:n_nearest]
-
+            '''
             if(len(valid_neighbors)>0):
                 for target in valid_neighbors:
-                    target.vel += self.get_random_eta(nu)
-                    self.F+=self.get_de_ad(target, eps)  #change the function called here to switch between ttc and powerlaw
+                    self.F+=self.get_fa(target, 0.2)  #change the function called here to switch between ttc and powerlaw
                 if (np.linalg.norm(self.F) > self.maxF):
-                    self.F*=self.maxF/np.linalg.norm(self.F)
+                    self.F = self.F*(self.maxF/np.linalg.norm(self.F))
             else:
                 self.F = (self.gvel-self.vel)/self.ksi
                 
@@ -75,6 +74,8 @@ class Agent(object):
         """
         if not self.atGoal:
             self.vel += self.F*dt     # update the velocity
+            if(np.linalg.norm(self.vel) > self.maxspeed ):
+                self.vel = self.vel*(self.maxspeed/np.linalg.norm(self.vel))
             self.pos += self.vel*dt   #update the position
         
             # compute the goal velocity for the next time step. Do not modify this
@@ -100,8 +101,8 @@ class Agent(object):
         c = x.dot(x)-r**2
         if(c<0): return 0
         v = v0-target.vel
-        a = v.dot(v) #- eps**2  #choose use eps or not 
-        b = x.dot(v) #- eps*r
+        a = v.dot(v) - eps**2  #choose use eps or not 
+        b = x.dot(v) - eps*r
         if(b>0): return float('inf')
         discr = b*b -a*c
         if(discr<=0): return float('inf')
@@ -129,6 +130,7 @@ class Agent(object):
         m = 2
         x = self.pos - target.pos
         v = self.vel - target.vel
+        v += self.get_random_eta(0.1)
         r = self.radius + target.radius
         a = v.dot(v) - eps**2
         b = x.dot(v) - eps*r
@@ -138,21 +140,23 @@ class Agent(object):
         discr = sqrt(discr)
         t = (-b - discr)/a
         if(t<0): return np.zeros(2) #no collision and no avoid force
-        #return 2*k*((x+v*t)/discr)/(t**3)
         tau = c/(-b +sqrt(discr))
-        fa = k*(np.e**(-tau/t0))*(m+tau/t0)*(x+v*tau)/((tau**(m+1))*sqrt(discr))  #with cutoff
+        #D = (x.dot(v))**2 -(np.linalg.norm(v)**2)*(np.linalg.norm(x)**2 - r**2) #for powerlaw model 
+        D = (x.dot(v) - r*eps)**2 - (np.linalg.norm(v)**2 - eps**2)*(np.linalg.norm(x)**2 - r**2) #for Isotropic model
+        fa = k*(np.e**(-tau/t0))*(m+tau/t0)*(x+v*tau)/((tau**(m+1))*sqrt(D))  #with cutoff
         return fa
 
-    def get_de_ad(self, target, eps): #get avoid force by powerlaw with Adversarial model 
+    def get_de_ad(self, target, eps, nu): #get avoid force by powerlaw with Adversarial model 
         k = 10
         t0 = 3
         m = 2
         x = self.pos - target.pos
         v = self.vel - target.vel
+        v += self.get_random_eta(nu) #simulate the sensor error
         v -= eps*(x/np.linalg.norm(x))
         r = self.radius + target.radius
-        a = v.dot(v)
-        b = x.dot(v)
+        a = v.dot(v) - eps**2
+        b = x.dot(v) - eps*r
         c = x.dot(x) - r*r
         discr = b*b - a*c
         if(discr<=0): return np.zeros(2)
@@ -160,8 +164,8 @@ class Agent(object):
         t = (-b - discr)/a
         if(t<0): return np.zeros(2) #no collision and no avoid force
         tau = c/(-b +sqrt(discr))
-        fa = k*(np.e**(-tau/t0))*(m+tau/t0)*(x+v*tau)/((tau**(m+1))*sqrt(discr))
-        #return 2*k*((x+v*t)/discr)/(t**3)
+        D = (x.dot(v) - r*eps)**2 - (np.linalg.norm(v)**2 - eps**2)*(np.linalg.norm(x)**2 - r**2)
+        fa = (k*(np.e**(-tau/t0))/(tau**(m+1)))*(m+tau/t0)*((x+v*tau)/(sqrt(D)))
         return fa
     
     def get_random_eta(self, nu=0.1):
