@@ -123,20 +123,33 @@ def compute_path(grid,start,goal,cost,heuristic):
     # Initially you may want to ignore theta, that is, plan in 2D.
     # To do so, set actions=forward, cost = [1, 1, 1, 1], and action_name = ['U', 'L', 'R', 'D']
     # Similarly, set parent=[[' ' for row in range(len(grid[0]))] for col in range(len(grid))]
-
+    print(open_set.put((1,2,3), Value(f = 100, g = 50)))
+    print("first pop: ", open_set.pop()[1].g)
+    print("second pop: ", open_set.pop())
+    
+    
     while(open_set.__len__() != 0):
-      node = open_set.pop()
-      if(node[0] == start): 
+      curr_node = open_set.pop()
+      if(curr_node[0] == start): 
         print("get path!")
         break
-      x_current = node[0][0] #row of current node
-      y_current = node[0][1] #col of current node
+      x_current = curr_node[0][0] #row of current node
+      y_current = curr_node[0][1] #col of current node
+      o_current = curr_node[0][3]
 
-      for i_f, f in enumerate(forward):
-        x_next = x_current+f[0] #row of next node
-        y_next = y_current+f[1] #col of next node
+      for i_act, act in enumerate(action)):
+        o_next = (o_current + act) % 4 #orientation of next node
+        x_next = x_current + forward[o_next][0] #row of next node
+        y_next = y_current + forward[o_next][1] #col of next node
+        n_act = action_name[i_act]
 
         if(x_next>=0 and x_next<len(grid) and y_next>=0 and y_next<=len(grid[0])):
+          if(grid[x_next][y_next] == 0):
+            F_cost = cost[i_act] + abs(x_next - goal[0]) + abs(y_next - goal[1]) #calculate the f(n) = g(n) + h(n) 
+            open_set.put((x_next, y_next, o_next), Value(f = F_cost, g = cost[i_act]))
+            
+      
+
 
     print("outside of the loop ", open_set.__len__())
     return path, closed_set
