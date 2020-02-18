@@ -124,6 +124,21 @@ def compute_path(grid,start,goal,cost,heuristic):
     # To do so, set actions=forward, cost = [1, 1, 1, 1], and action_name = ['U', 'L', 'R', 'D']
     # Similarly, set parent=[[' ' for row in range(len(grid[0]))] for col in range(len(grid))]
 
+    while(open_set.__len__() != 0):
+      node = open_set.pop()
+      if(node[0] == start): 
+        print("get path!")
+        break
+      x_current = node[0][0] #row of current node
+      y_current = node[0][1] #col of current node
+
+      for i_f, f in enumerate(forward):
+        x_next = x_current+f[0] #row of next node
+        y_next = y_current+f[1] #col of next node
+
+        if(x_next>=0 and x_next<len(grid) and y_next>=0 and y_next<=len(grid[0])):
+
+    print("outside of the loop ", open_set.__len__())
     return path, closed_set
 
 
