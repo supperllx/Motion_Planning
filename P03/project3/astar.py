@@ -163,6 +163,9 @@ def compute_path(grid,start,goal,cost,heuristic):
     #if(curr_node[0] != goal): print("fail to find the path!")
     return path, closed_set
 
+# def dijkstra(grid,start,goal,cost,heuristic):
+#   closed_set = OrderedSet()
+#   open_set = PriorityQueue(order=min, f=lambda v: v.f)
 
 if __name__ == "__main__":
     path,closed=compute_path(grid, init, goal, cost, heuristic)
@@ -171,7 +174,7 @@ if __name__ == "__main__":
         print(path[i])
 
     print("\nExpanded Nodes")    
-    for node in closed:
+    for node, value in closed:
         print(node)
 
 """
