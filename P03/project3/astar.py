@@ -163,9 +163,17 @@ def compute_path(grid,start,goal,cost,heuristic):
     #if(curr_node[0] != goal): print("fail to find the path!")
     return path, closed_set
 
-# def dijkstra(grid,start,goal,cost,heuristic):
+# def dijkstra(grid,start,goal,cost,heuristic): #dijkstra algorithm
 #   closed_set = OrderedSet()
 #   open_set = PriorityQueue(order=min, f=lambda v: v.f)
+
+#   x = start[0]
+#     y = start[1]
+#     theta = start[2]
+#     h = heuristic[x][y]
+#     g = 0
+#     f = g+h
+#     open_set.put(start, Value(f=f,g=g))
 
 if __name__ == "__main__":
     path,closed=compute_path(grid, init, goal, cost, heuristic)
