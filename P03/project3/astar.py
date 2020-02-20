@@ -20,7 +20,7 @@ forward = [[-1,  0], # 0: go north
 # The car can perform 3 actions: -1: right turn and then move forward, 0: move forward, 1: left turn and then move forward
 action = [-1, 0, 1]
 action_name = ['R', 'F', 'L']
-cost = [1, 1, 1] # corresponding cost values
+cost = [1, 1, 10] # corresponding cost values
 
 # GRID:
 #     0 = navigable space
@@ -122,41 +122,45 @@ def compute_path(grid,start,goal,cost,heuristic):
 
     # Initially you may want to ignore theta, that is, plan in 2D.
     # To do so, set actions=forward, cost = [1, 1, 1, 1], and action_name = ['U', 'L', 'R', 'D']
-    # Similarly, set parent=[[' ' for row in range(len(grid[0]))] for col in range(len(grid))]
-    print(open_set.put((1,2,3), Value(f = 100, g = 50)))
-    print('open_set has (1,2,3): ', open_set.has((1,2,4)))
-    open_set.get((1,2,3)).f = 22
-    print("open_set.get((1,2,3)).f: ",open_set.get((1,2,3)).f)
-    print("first pop: ", open_set.pop()[1].g)
-    print("second pop: ", open_set.pop())
+    # Similarly, set parent=[[' ' for row in range(len(grid[0]))] for col in range(len(grid))]  
+
+    #print(open_set.put((1,2,3), Value(f = 100, g = 50)))
+    #print('open_set has (1,2,3): ', open_set.has((1,2,4)))
+    #open_set.get((1,2,3)).f = 22
+    #print("open_set.get((1,2,3)).f: ",open_set.get((1,2,3)).f)
+    #print("first pop: ", open_set.pop()[1].g)
+    #print("second pop: ", open_set.pop())
+    path[goal[0]][goal[1]] = '*'
     
     
     while(len(open_set) != 0):
       curr_node = open_set.pop()
-      if(curr_node[0] == start): 
+      if(curr_node[0] == goal): 
         print("get path!")
+        closed_set.add(curr_node)
         break
       closed_set.add(curr_node)
       x_current = curr_node[0][0] #row of current node
       y_current = curr_node[0][1] #col of current node
-      o_current = curr_node[0][3] #orientation of current node
+      o_current = curr_node[0][2] #orientation of current node
 
       for i_act, act in enumerate(action):
         o_next = (o_current + act) % 4 #orientation of next node
         x_next = x_current + forward[o_next][0] #row of next node
         y_next = y_current + forward[o_next][1] #col of next node
-        n_act = action_name[i_act] #act of next node
+        #n_act = action_name[i_act] #act of next node
 
-        if(x_next>=0 and x_next<len(grid) and y_next>=0 and y_next<=len(grid[0]) and grid[x_next][y_next] == 0): #filter the available child (map boundery and barrier)
-          F_cost = cost[i_act] + heuristic[x_next][y_next] # abs(x_next - goal[0]) + abs(y_next - goal[1]) #calculate the f(n) = g(n) + h(n)
-          if((not open_set.has((x_next, y_next, o_next))) or (not closed_set.has((x_next, y_next, o_next)))): 
-            open_set.put((x_next, y_next, o_next), Value(f = F_cost, g = cost[i_act]))
-          elif(F_cost < open_set.get((x_next, y_next, o_next))):
-            open_set.get((x_next, y_next, o_next)).f = F_cost
-            open_set.get((x_next, y_next, o_next)).g = cost[i_act]   
+        if(x_next>=0 and x_next<len(grid) and y_next>=0 and y_next<len(grid[0])): #filter the available child (map boundery and barrier)
+          if(grid[x_next][y_next] == 0):
+            F_cost = cost[i_act] + heuristic[x_next][y_next] # abs(x_next - goal[0]) + abs(y_next - goal[1]) #calculate the f(n) = g(n) + h(n)
+            if((not open_set.has((x_next, y_next, o_next))) or (not closed_set.has((x_next, y_next, o_next)))): 
+              open_set.put((x_next, y_next, o_next), Value(f = F_cost, g = i_act))
+            elif(F_cost < open_set.get((x_next, y_next, o_next)).f):
+              open_set.get((x_next, y_next, o_next)).f = F_cost
+              open_set.get((x_next, y_next, o_next)).g = cost[i_act]   
+              
 
-
-    print("outside of the loop ", open_set.__len__())
+    #if(curr_node[0] != goal): print("fail to find the path!")
     return path, closed_set
 
 
