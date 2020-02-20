@@ -143,24 +143,25 @@ def compute_path(grid,start,goal,cost,heuristic):
       x_current = curr_node[0][0] #row of current node
       y_current = curr_node[0][1] #col of current node
       o_current = curr_node[0][2] #orientation of current node
+      path[x_current][y_current] = curr_node[1].g
 
       for i_act, act in enumerate(action):
         o_next = (o_current + act) % 4 #orientation of next node
         x_next = x_current + forward[o_next][0] #row of next node
         y_next = y_current + forward[o_next][1] #col of next node
-        #n_act = action_name[i_act] #act of next node
+        n_act = action_name[i_act] #act of next node
 
         if(x_next>=0 and x_next<len(grid) and y_next>=0 and y_next<len(grid[0])): #filter the available child (map boundery and barrier)
           if(grid[x_next][y_next] == 0):
             F_cost = cost[i_act] + heuristic[x_next][y_next] # abs(x_next - goal[0]) + abs(y_next - goal[1]) #calculate the f(n) = g(n) + h(n)
             if((not open_set.has((x_next, y_next, o_next))) or (not closed_set.has((x_next, y_next, o_next)))): 
-              open_set.put((x_next, y_next, o_next), Value(f = F_cost, g = i_act))
+              open_set.put((x_next, y_next, o_next), Value(f = F_cost, g = n_act))
             elif(F_cost < open_set.get((x_next, y_next, o_next)).f):
               open_set.get((x_next, y_next, o_next)).f = F_cost
-              open_set.get((x_next, y_next, o_next)).g = cost[i_act]   
+              open_set.get((x_next, y_next, o_next)).g = n_act  
               
 
-    #if(curr_node[0] != goal): print("fail to find the path!")
+    if(curr_node[0] != goal): print("fail to find the path!")
     return path, closed_set
 
 # def dijkstra(grid,start,goal,cost,heuristic): #dijkstra algorithm
