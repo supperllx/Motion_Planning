@@ -130,8 +130,9 @@ def compute_path(grid,start,goal,cost,heuristic):
     #print("open_set.get((1,2,3)).f: ",open_set.get((1,2,3)).f)
     #print("first pop: ", open_set.pop()[1].g)
     #print("second pop: ", open_set.pop())
+    l = []
     path[goal[0]][goal[1]] = '*'
-    
+    l.append(start[2])
     
     while(len(open_set) != 0):
       curr_node = open_set.pop()
@@ -139,17 +140,19 @@ def compute_path(grid,start,goal,cost,heuristic):
         print("get path!")
         closed_set.add(curr_node)
         break
-      closed_set.add(curr_node)
       x_current = curr_node[0][0] #row of current node
       y_current = curr_node[0][1] #col of current node
       o_current = curr_node[0][2] #orientation of current node
-      path[x_current][y_current] = curr_node[1].g
+      #path[x_current][y_current] = curr_node[1].g
+      path[x_current][y_current] = (o_current - l[-1])?(o_current - l[-1])
+      l.append(curr_node[0][2]])
+      path[x_current][y_current] = l[]
 
       for i_act, act in enumerate(action):
         o_next = (o_current + act) % 4 #orientation of next node
         x_next = x_current + forward[o_next][0] #row of next node
         y_next = y_current + forward[o_next][1] #col of next node
-        n_act = action_name[i_act] #act of next node
+        n_act = action_name[i_act] #action to get this next node, this cause the one step delay in the display
 
         if(x_next>=0 and x_next<len(grid) and y_next>=0 and y_next<len(grid[0])): #filter the available child (map boundery and barrier)
           if(grid[x_next][y_next] == 0):
