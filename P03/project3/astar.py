@@ -130,19 +130,17 @@ def compute_path(grid,start,goal,cost,heuristic):
     
     while(len(open_set) != 0):
       curr_node = open_set.pop()
+      if(curr_node[0][:2] != start[:2]):
+        path[l[-1][0]][l[-1][1]] = curr_node[1].g
+      l.append(curr_node[0])
       if(curr_node[0] == goal): 
         print("get path!")
         closed_set.add(curr_node)
-        path[l[-1][0]][l[-1][1]] = curr_node[1].g
         break
       closed_set.add(curr_node)
       x_current = curr_node[0][0] #row of current node
       y_current = curr_node[0][1] #col of current node
       o_current = curr_node[0][2] #orientation of current node
-      # i_pre = forward[(o_current)]
-      if(curr_node[0][:2] != start[:2]):
-        path[l[-1][0]][l[-1][1]] = curr_node[1].g
-      l.append(curr_node[0])
 
       for i_act, act in enumerate(action):
         o_next = (o_current + act) % 4 #orientation of next node
@@ -166,30 +164,33 @@ def compute_path(grid,start,goal,cost,heuristic):
 def dijkstra(grid,start,goal,cost): #dijkstra algorithm
   closed_set = OrderedSet()
   open_set = PriorityQueue(order=min, f=lambda v: v.f)
-  res = []
+  l = []
+  l.append(goal[:2])
 
   path =[['-' for row in range(len(grid[0]))] for col in range(len(grid))]
   dist =[[float('inf') for row in range(len(grid[0]))] for col in range(len(grid))]
   parent =[['NULL' for row in range(len(grid[0]))] for col in range(len(grid))]
-  open_set.put(start[:2], Value(f = dist[start[0]][start[1]], g=goal[2]))
+  open_set.put(start[:2], Value(f = dist[start[0]][start[1]], g=(goal[2], 'null')))
+  path[goal[0]][goal[1]] = '*'
 
   for x in range(len(grid)):
     for y in range(len(grid[0])):
       if((x,y) != (goal[0], goal[1])):
         dist[x][y] = float('inf')
         parent[x][y] = 'NULL'
-        open_set.put((x,y), Value(f = dist[x][y], g='NULL'))
-  open_set.put(goal[:2], Value(f=0, g=goal[2]))
+        open_set.put((x,y), Value(f = dist[x][y], g=('NULL', 'NULL')))
+  open_set.put(goal[:2], Value(f=0, g=(goal[2], 'null')))
   dist[goal[0]][goal[1]] = 0
 
   while(len(open_set)!=0):
     curr_node = open_set.pop()
     closed_set.add(curr_node)
+    if(curr_node[0][:2] != goal[:2]):
+      path[l[-1][0]][l[-1][1]] = curr_node[1].g[1]
+    l.append(curr_node[0][:2])
     x_current = curr_node[0][0] #row of current node
     y_current = curr_node[0][1] #col of current node
-    o_current = curr_node[1].g #orientation of current node
-    res.append((x_current, y_current, o_current))
-    #print('x_curr, y_curr: ', (x_current, y_current, o_current))
+    o_current = curr_node[1].g[0] #orientation of current node
     if(curr_node[0] == start[:2]): 
       print("get path! ")
       break
@@ -201,23 +202,22 @@ def dijkstra(grid,start,goal,cost): #dijkstra algorithm
         n_act = action_name[i_act] #action to get this next node, this cause the one step delay in the display
 
         if(x_next>=0 and x_next<len(grid) and y_next>=0 and y_next<len(grid[0])): #filter the available child (map boundery and barrier)
-          # print('get here: ', (x_next, y_next))
           if(grid[x_next][y_next] == 0):
             F_cost = cost[i_act] + dist[x_current][y_current]   #calculate f(n) = g(n)
             F_raw = dist[x_next][y_next]
             if(((x_next, y_next, o_next) not in closed_set) and F_cost < F_raw): #child not in closed_set
               open_set.get((x_next, y_next)).f = F_cost
-              open_set.get((x_next, y_next)).g = o_next
+              open_set.get((x_next, y_next)).g = (o_next, n_act)
               dist[x_next][y_next] = F_cost
               parent[x_next][y_next] = (x_current, y_current, o_current)
               
-  if(curr_node[0] != goal): print("fail to find the path!")
+  if(curr_node[0][:2] != start[:2]): print("fail to find the path!")
   return path, closed_set, parent
 
 
 if __name__ == "__main__":
-    path,closed=compute_path(grid, init, goal, cost, heuristic)
-    #path,closed, parent,=dijkstra(grid, init, goal, cost)
+    path,closed=compute_path(grid, init, goal, cost, heuristic) #swtich the function called between A* and dijkstra
+    # path,closed, parent,=dijkstra(grid, init, goal, cost)
 
     for i in range(len(path)):
         print(path[i])
@@ -226,7 +226,7 @@ if __name__ == "__main__":
     for node in closed:
         print(node[0])
 
-    # for i in range(len(parent)):
+    # for i in range(len(parent)):  #This is for the dijkstra function, I have trouble in display the path in dijkstra
     #     print(parent[i])
 
 """
