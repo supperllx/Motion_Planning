@@ -124,29 +124,25 @@ def compute_path(grid,start,goal,cost,heuristic):
     # To do so, set actions=forward, cost = [1, 1, 1, 1], and action_name = ['U', 'L', 'R', 'D']
     # Similarly, set parent=[[' ' for row in range(len(grid[0]))] for col in range(len(grid))]  
 
-    #print(open_set.put((1,2,3), Value(f = 100, g = 50)))
-    #print('open_set has (1,2,3): ', open_set.has((1,2,4)))
-    #open_set.get((1,2,3)).f = 22
-    #print("open_set.get((1,2,3)).f: ",open_set.get((1,2,3)).f)
-    #print("first pop: ", open_set.pop()[1].g)
-    #print("second pop: ", open_set.pop())
-    l = []
     path[goal[0]][goal[1]] = '*'
-    l.append(start[2])
+    l = []
+    l.append(start)
     
     while(len(open_set) != 0):
       curr_node = open_set.pop()
       if(curr_node[0] == goal): 
         print("get path!")
         closed_set.add(curr_node)
+        path[l[-1][0]][l[-1][1]] = curr_node[1].g
         break
+      closed_set.add(curr_node)
       x_current = curr_node[0][0] #row of current node
       y_current = curr_node[0][1] #col of current node
       o_current = curr_node[0][2] #orientation of current node
-      #path[x_current][y_current] = curr_node[1].g
-      path[x_current][y_current] = (o_current - l[-1])?(o_current - l[-1])
-      l.append(curr_node[0][2]])
-      path[x_current][y_current] = l[]
+      # i_pre = forward[(o_current)]
+      if(curr_node[0][:2] != start[:2]):
+        path[l[-1][0]][l[-1][1]] = curr_node[1].g
+      l.append(curr_node[0])
 
       for i_act, act in enumerate(action):
         o_next = (o_current + act) % 4 #orientation of next node
@@ -159,35 +155,79 @@ def compute_path(grid,start,goal,cost,heuristic):
             F_cost = cost[i_act] + heuristic[x_next][y_next] # abs(x_next - goal[0]) + abs(y_next - goal[1]) #calculate the f(n) = g(n) + h(n)
             if((not open_set.has((x_next, y_next, o_next))) or (not closed_set.has((x_next, y_next, o_next)))): 
               open_set.put((x_next, y_next, o_next), Value(f = F_cost, g = n_act))
-            elif(F_cost < open_set.get((x_next, y_next, o_next)).f):
+              #parent[x_next][y_next] = (x_next, y_next, o_next)
+            elif(open_set.has((x_next, y_next, o_next)) and F_cost < open_set.get((x_next, y_next, o_next)).f):
               open_set.get((x_next, y_next, o_next)).f = F_cost
               open_set.get((x_next, y_next, o_next)).g = n_act  
-              
 
     if(curr_node[0] != goal): print("fail to find the path!")
     return path, closed_set
 
-# def dijkstra(grid,start,goal,cost,heuristic): #dijkstra algorithm
-#   closed_set = OrderedSet()
-#   open_set = PriorityQueue(order=min, f=lambda v: v.f)
+def dijkstra(grid,start,goal,cost): #dijkstra algorithm
+  closed_set = OrderedSet()
+  open_set = PriorityQueue(order=min, f=lambda v: v.f)
+  res = []
 
-#   x = start[0]
-#     y = start[1]
-#     theta = start[2]
-#     h = heuristic[x][y]
-#     g = 0
-#     f = g+h
-#     open_set.put(start, Value(f=f,g=g))
+  path =[['-' for row in range(len(grid[0]))] for col in range(len(grid))]
+  dist =[[float('inf') for row in range(len(grid[0]))] for col in range(len(grid))]
+  parent =[['NULL' for row in range(len(grid[0]))] for col in range(len(grid))]
+  open_set.put(start[:2], Value(f = dist[start[0]][start[1]], g=goal[2]))
+
+  for x in range(len(grid)):
+    for y in range(len(grid[0])):
+      if((x,y) != (goal[0], goal[1])):
+        dist[x][y] = float('inf')
+        parent[x][y] = 'NULL'
+        open_set.put((x,y), Value(f = dist[x][y], g='NULL'))
+  open_set.put(goal[:2], Value(f=0, g=goal[2]))
+  dist[goal[0]][goal[1]] = 0
+
+  while(len(open_set)!=0):
+    curr_node = open_set.pop()
+    closed_set.add(curr_node)
+    x_current = curr_node[0][0] #row of current node
+    y_current = curr_node[0][1] #col of current node
+    o_current = curr_node[1].g #orientation of current node
+    res.append((x_current, y_current, o_current))
+    #print('x_curr, y_curr: ', (x_current, y_current, o_current))
+    if(curr_node[0] == start[:2]): 
+      print("get path! ")
+      break
+    
+    for i_act, act in enumerate(action):
+        o_next = (o_current - act) % 4 #orientation of next node
+        x_next = x_current - forward[o_next][0] #row of next node
+        y_next = y_current - forward[o_next][1] #col of next node
+        n_act = action_name[i_act] #action to get this next node, this cause the one step delay in the display
+
+        if(x_next>=0 and x_next<len(grid) and y_next>=0 and y_next<len(grid[0])): #filter the available child (map boundery and barrier)
+          # print('get here: ', (x_next, y_next))
+          if(grid[x_next][y_next] == 0):
+            F_cost = cost[i_act] + dist[x_current][y_current]   #calculate f(n) = g(n)
+            F_raw = dist[x_next][y_next]
+            if(((x_next, y_next, o_next) not in closed_set) and F_cost < F_raw): #child not in closed_set
+              open_set.get((x_next, y_next)).f = F_cost
+              open_set.get((x_next, y_next)).g = o_next
+              dist[x_next][y_next] = F_cost
+              parent[x_next][y_next] = (x_current, y_current, o_current)
+              
+  if(curr_node[0] != goal): print("fail to find the path!")
+  return path, closed_set, parent
+
 
 if __name__ == "__main__":
     path,closed=compute_path(grid, init, goal, cost, heuristic)
+    #path,closed, parent,=dijkstra(grid, init, goal, cost)
 
     for i in range(len(path)):
         print(path[i])
 
     print("\nExpanded Nodes")    
-    for node, value in closed:
-        print(node)
+    for node in closed:
+        print(node[0])
+
+    # for i in range(len(parent)):
+    #     print(parent[i])
 
 """
 To test the correctness of your A* implementation, when using cost = [1, 1, 10] your code should return 
