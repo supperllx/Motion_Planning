@@ -217,17 +217,17 @@ def dijkstra(grid,start,goal,cost): #dijkstra algorithm
 
 if __name__ == "__main__":
     path,closed=compute_path(grid, init, goal, cost, heuristic) #swtich the function called between A* and dijkstra
-    # path,closed, parent,=dijkstra(grid, init, goal, cost)
+    #path,closed, parent,=dijkstra(grid, init, goal, cost)
 
-    for i in range(len(path)):
+    for i in range(len(path)): # I have trouble in showing the path in dijkstra, call the print parent[] bellow to see the path
         print(path[i])
 
     print("\nExpanded Nodes")    
     for node in closed:
         print(node[0])
 
-    # for i in range(len(parent)):  #This is for the dijkstra function, I have trouble in display the path in dijkstra
-    #     print(parent[i])
+    #for i in range(len(parent)):  # This is for showing the parent nodes in dijkstra function
+    #    print(parent[i])
 
 """
 To test the correctness of your A* implementation, when using cost = [1, 1, 10] your code should return 
