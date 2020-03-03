@@ -1,4 +1,4 @@
-# scene.py
+# graph.py
 # ---------
 # Licensing Information:  You are free to use or extend these projects for
 # educational purposes provided that (1) you do not distribute or publish
@@ -137,5 +137,22 @@ class Roadmap:
 
     def computeConnectedComponents(self): # implement this to compute the connected components of the undirected graph
         return 
- 
+
+    
+    def saveRoadmap(self, filename):
+        file = open(filename,"w")
+        #export the number of vertices
+        file.write(str(self.getNrVertices()) + "\n") 
+        for v in self.vertices:
+            file.write(str(v.id) + "," + ','.join([str(c) for c in v.q]) + "," + str(len(v.edges)) + "\n")
+            for e in v.edges:
+                file.write(str(e.id) + "," + str(e.dist) + "," + str(len(e.path)))
+                if e.path:
+                    file.write("\n")
+                    for p in e.path:
+                        file.write(','.join([str(q) for q in p]) + "\n")
+                else: 
+                     file.write("\n")
+
+        file.close()  
  

@@ -46,7 +46,8 @@ def build_roadmap(q_range, robot_dim, scene_obstacles):
     # the roadmap 
     graph = Roadmap()
      
-   
+    # uncomment this to export the roadmap to a file
+    graph.saveRoadmap("prm_roadmap.txt")
     return graph
 
 # ----------------------------------------
