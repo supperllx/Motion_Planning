@@ -9,6 +9,9 @@
 
 from graph import RoadmapVertex, RoadmapEdge, Roadmap
 from utils import *
+from math import *
+import numpy as np
+import random
 
 disk_robot = True #(change this to False for the advanced extension) 
 
@@ -43,9 +46,33 @@ def build_roadmap(q_range, robot_dim, scene_obstacles):
     
     robot_radius = max(robot_width, robot_height)/2.
 
+    secene_x = q_range[0]
+    secene_y = q_range[1]
+    
+    n_sample = 100
+    samples = [[random.uniform(secene_x[0],secene_x[1]), random.uniform(secene_y[0], secene_y[1])] for _ in range(400)]
+    # samples = list(zip( list(np.linspace(x_limit[0], x_limit[1], n_sample))[1:-1], list(np.linspace(y_limit[0], y_limit[1], n_sample))[1:-1] ))
+    # print('samples: ', samples)
+    valid_samples = [x for x in samples if not test_in_obs(x, obstacles)]
+    print("valid_samples: ", len(valid_samples))
+    
+
     # the roadmap 
     graph = Roadmap()
-     
+
+    for i, sample_p in enumerate(valid_samples): #add all the valid sample vertex
+        graph.addVertex(sample_p)
+    
+    for i_vertex in graph.getVertices():
+        neighbors = k_nearest_neighbors(graph, i_vertex.getConfiguration())
+        for nbor in neighbors:
+            inters = interpolate(i_vertex.getConfiguration(), nbor[1].getConfiguration(), 0.1)
+            if(not test_inters(inters, obstacles)):
+                i_vertex.addEdge(nbor[1].id, nbor[0])
+                graph.addEdge(i_vertex, nbor[1], nbor[0])
+
+    
+    print('len graph: ', len(graph.vertices))
     # uncomment this to export the roadmap to a file
     graph.saveRoadmap("prm_roadmap.txt")
     return graph
@@ -66,9 +93,10 @@ def find_path(q_start, q_goal, graph):
     closed_set = OrderedSet()
     
     # Use the PriorityQueue for the open list
-    open_set = PriorityQueue(order=min, f=lambda v: v.f)      
+    open_set = PriorityQueue(order=min, f=lambda v: v.f)     
 
-   
+
+
     return path   
 
 
@@ -76,48 +104,89 @@ def find_path(q_start, q_goal, graph):
 # below are some functions that you may want to populate/modify and use above 
 # ----------------------------------------
 
-def nearest_neighbors(graph, q, max_dist=10.0):
+def nearest_neighbors(graph: Roadmap, q, max_dist=10.0):
     """
         Returns all the nearest roadmap vertices for a given configuration q that lie within max_dist units
         You may also want to return the corresponding distances 
     """
+    nearest_n = []
 
-    return None, None
+    for vertex in graph.getVertices():
+        dist = distance(q, vertex.getConfiguration())
+        if( dist <= max_dist ):
+            nearest_n.append((vertex, dist))
+
+    return nearest_n
 
 
-def k_nearest_neighbors(graph, q, K=10):
+def k_nearest_neighbors(graph: Roadmap, q, K=10):
     """
         Returns the K-nearest roadmap vertices for a given configuration q. 
         You may also want to return the corresponding distances 
     """
-  
-    return None
 
-def distance (q1, q2): 
+    # dist = [0]*graph.getNrVertices()-1
+    dist = []
+    for i, vertex in enumerate(graph.getVertices()):
+        if(q != vertex.getConfiguration()):
+            dist.append(distance(q, vertex.getConfiguration()))
+
+    #nearest_neighbors = ([x for _,x in sorted(zip(dist,graph.getVertices()))])[:K]
+    nearest_neighbors = sorted(list(zip(dist, graph.getVertices())))[:K]
+    return nearest_neighbors
+
+def distance(q1, q2): 
     """
         Returns the distance between two configurations. 
         You may want to look at the getRobotPlacement function in utils.py that returns the OBB for a given configuration  
     """
 
-    return None
+    dist = sqrt((q1[0] - q2[0])**2 + (q1[1] - q2[1])**2)
+
+    return dist
 
 def collision(q):
     """
         Determines whether the robot placed at configuration q will collide with the list of AABB obstacles.  
     """
-  
 
     return False 
    
 
-def interpolate (q1, q2, stepsize):
+def interpolate (q1, q2, stepsize): 
     """
         Returns an interpolated local path between two given configurations. 
         It can be used to determine whether an edge between vertices is collision-free. 
     """
+    if(abs(q1[0]-q2[0]) > abs(q1[1] - q2[1])):
+        size = int(abs(q1[0] - q2[0])/stepsize) + 1
+        inter_samples = [[0,0]]*size
+        inter_x = np.linspace(q1[0], q2[0], size)
+        inter_y = np.linspace(q1[1], q2[1], size)
 
-    return None
+        for i in range(0, size):
+            inter_samples[i] = [inter_x[i], inter_y[i]]
+    else:
+        size = int(abs(q1[1] - q2[1])/stepsize) + 1
+        inter_samples = [[0,0]]*size
+        inter_x = np.linspace(q1[0], q2[0], size)
+        inter_y = np.linspace(q1[1], q2[1], size)
 
+        for i in range(0, size):
+            inter_samples[i] = [inter_x[i], inter_y[i]]
+    return inter_samples
+
+def test_in_obs(p, obs_list):
+    for obs in obs_list:
+        if( obs.x_min <= p[0] <= obs.x_max and obs.y_min <= p[1] <= obs.y_max):
+            return True
+    return False
+
+def test_inters(inters: list, obs_list):
+    for inter_points in inters:
+        if(test_in_obs(inter_points, obs_list)):
+            return True
+    return False
 
 if __name__ == "__main__":
     from scene import Scene

@@ -214,6 +214,7 @@ class Scene(tk.Frame):
         self.clear_canvas()
         world_scale = self.resolution/self.scene_width
         for obst in self.obstacles:
+            #print(obst.points) #just for test
             self.canvas.create_rectangle(world_scale*(obst.x_min - self.scene_xmin), world_scale*(obst.y_min - self.scene_ymin), 
             world_scale*(obst.x_max - self.scene_xmin),  world_scale*(obst.y_max - self.scene_ymin), fill="red", tag="obstacle")
         
