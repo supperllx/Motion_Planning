@@ -17,6 +17,7 @@ from obstacles import BoxObstacle
 from utils import *
 from graph import *
 import copy
+from prmplanner import test_in_obs
 
 class Scene(tk.Frame):
     random.seed('cpsc8810')
@@ -153,6 +154,12 @@ class Scene(tk.Frame):
         self.canvas.delete("path")
         self.start = (random.uniform(self.scene_xmin, self.scene_xmax), random.uniform(self.scene_ymin, self.scene_ymax), random.uniform(0, np.pi))
         self.goal = (random.uniform(self.scene_xmin, self.scene_xmax), random.uniform(self.scene_ymin, self.scene_ymax), random.uniform(0, np.pi))
+        
+        while(test_in_obs(self.start, self.obstacles, max(self.robot_width, self.robot_height)/2.)):
+            self.start = (random.uniform(self.scene_xmin, self.scene_xmax), random.uniform(self.scene_ymin, self.scene_ymax), random.uniform(0, np.pi))
+        while(test_in_obs(self.goal, self.obstacles, max(self.robot_width, self.robot_height)/2.)):
+            self.goal = (random.uniform(self.scene_xmin, self.scene_xmax), random.uniform(self.scene_ymin, self.scene_ymax), random.uniform(0, np.pi))
+
         #self.draw_config(self.start,"#43a2ca","start")
         #self.draw_config(self.goal,"#e0f3db","goal")
         self.draw_config(self.start,"green","start")
