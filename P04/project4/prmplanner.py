@@ -67,7 +67,7 @@ def build_roadmap(q_range, robot_dim, scene_obstacles):
                 y = random.uniform(y_low, y_high)
                 samples.append([x,y])
     valid_samples = [x for x in samples if not test_in_obs(x, obstacles, robot_radius)]
-    invalid_samples = [x for x in samples if test_in_obs(x, obstacles, robot_radius)]
+    # invalid_samples = [x for x in samples if test_in_obs(x, obstacles, robot_radius)]
     # for i in range(len(invalid_samples)):
     #     for j in range(len(invalid_samples)):
     #         mid_x = 0.5*(invalid_samples[i][0] + invalid_samples[j][0])
